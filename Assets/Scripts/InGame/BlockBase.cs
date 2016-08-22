@@ -46,13 +46,15 @@ public class BlockBase : MonoBehaviour {
 
 
     #region PUBLIC_FUNC
-    public void SetBlockProperty(int hx, int vy, float oddPosY)
+    public void SetBlockProperty(int hx, int vy, float oddPosY, eBLOCK_TYPE type)
     {
         Vector2 tmpPos = new Vector2();
 
         m_BlockObj = transform.gameObject;
 
         m_HField = m_BlockObj.transform.parent.GetComponent<HexagonField>();
+
+        m_BlockType = type; 
 
         m_HIdx = hx;
         m_VIdx = vy;

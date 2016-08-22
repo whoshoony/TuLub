@@ -105,12 +105,13 @@ public class HexagonField : MonoBehaviour
 
                 if(Input.GetMouseButtonUp(0))
                 {
-                    if (m_bMousePress)
+                    if (m_bMousePress) 
                     {
+                        Debug.Log("Pool Count = " + m_BlockBombPool.Count);
                         m_BlockBombPool.Clear();
                         m_BlockNamePool.Clear();
                         m_bMousePress = false;
-                    }
+                    }    
                 }
 
                 if(m_bMousePress)
@@ -187,7 +188,7 @@ public class HexagonField : MonoBehaviour
                 if (Check_SameType(bBase))
                 {
                     m_BlockBombPool.Add(bBase);
-                    Debug.Log("Touched Block = " + hit.collider.gameObject);
+                    Debug.Log("Touched Block = " + hit.collider.gameObject+"/"+bBase.m_BlockType);
                 }
             }
         }
@@ -222,7 +223,7 @@ public class HexagonField : MonoBehaviour
                 blockObj.transform.parent = parentObj;
                 blockObj.name = "Block_" + randBlock + "_" + i + "_" + k;
                 m_Blocks[i][k] = blockObj.AddComponent<BlockBase>();
-                m_Blocks[i][k].SetBlockProperty(i, k, oddPosY);
+                m_Blocks[i][k].SetBlockProperty(i, k, oddPosY, (eBLOCK_TYPE)randBlock);
             }
         }
     }
