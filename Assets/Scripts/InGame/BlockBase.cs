@@ -101,10 +101,11 @@ public class BlockBase : MonoBehaviour {
         if(m_BlockObj.transform.localPosition.y <= m_GoalPosition.y)
         {
             m_BlockObj.transform.localPosition = m_GoalPosition;
-            Debug.Log("vIdx = "+m_VIdx);
+            //Debug.Log("vIdx = "+m_VIdx);
             if(m_VIdx == m_HField.m_Blocks[0].Length-1)
             {
-                m_HField.SetMainGameState(eGAME_STATE.READY);
+                //m_HField.SetMainGameState(eGAME_STATE.READY);
+                m_HField.SetMainGameState(eGAME_STATE.PLAY);
             }
             m_BlockState = eBLOCK_STATE.IDLE;
         }

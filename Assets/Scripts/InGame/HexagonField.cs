@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 #region ENUM
 public enum eBLOCK_TYPE : byte
@@ -37,7 +38,8 @@ public enum eGAME_STATE //ingamemanager에 있는 State를 사용한다. 아니�
 }
 #endregion ENUM
 
-public class HexagonField : MonoBehaviour {
+public class HexagonField : MonoBehaviour
+{
     #region MEMBER_VAR
     public eGAME_STATE m_GameState;
     public BlockBase[][] m_Blocks;
@@ -50,6 +52,13 @@ public class HexagonField : MonoBehaviour {
     public const int FIELD_HEIGHT = 6;
 
     private const float BLOCK_GAP_HEIGHT = 0.86f;
+
+    //Ingame
+    private Camera m_Cam;
+    private List<BlockBase> m_BlockBombPool;
+    private List<string> m_BlockNamePool;
+    private RaycastHit hit;
+    private bool m_bMousePress;
     #endregion MEMBER_VAR
 
     #region UNITY_FUNC
@@ -60,33 +69,55 @@ public class HexagonField : MonoBehaviour {
     // Use this for initialization
     void Start()
     {
+        m_BlockBombPool = new List<BlockBase>();
+        m_BlockNamePool = new List<string>();
+        m_Cam = Camera.main;
     }
+
+
 
     // Update is called once per frame
     void Update()
     {
-        if(m_GameState == eGAME_STATE.DROP)
+        switch (m_GameState)
         {
-            if ((Time.time - m_DropStartTime) > 0.05f)
-            {
-                if (m_dropStep < FIELD_HEIGHT)
+            case eGAME_STATE.DROP:
+                if ((Time.time - m_DropStartTime) > 0.05f)
                 {
-                    for (int i = 0; i < m_Blocks.Length; ++i)
+                    if (m_dropStep < FIELD_HEIGHT)
                     {
-                        m_Blocks[i][m_dropStep].m_bDropStart = true;
-                        Debug.Log("drop step = " + m_dropStep);
+                        for (int i = 0; i < m_Blocks.Length; ++i)
+                        {
+                            m_Blocks[i][m_dropStep].m_bDropStart = true;
+                            //Debug.Log("drop step = " + m_dropStep);
+                        }
+                        m_dropStep++;
                     }
-                    m_dropStep++;
+
+                    m_DropStartTime = Time.time;
+                }
+                break;
+            case eGAME_STATE.PLAY:
+                if(Input.GetMouseButtonDown(0))
+                {
+                    m_bMousePress = true;
                 }
 
-                m_DropStartTime = Time.time;
-            }
+                if(Input.GetMouseButtonUp(0))
+                {
+                    if (m_bMousePress)
+                    {
+                        m_BlockBombPool.Clear();
+                        m_BlockNamePool.Clear();
+                        m_bMousePress = false;
+                    }
+                }
 
-            //if (m_dropStep> FIELD_HEIGHT)
-            //{
-            //    SetMainGameState(eGAME_STATE.READY);
-            //}
-            
+                if(m_bMousePress)
+                {
+                    Proc_BlockSelect();
+                }
+                break;
         }
     }
     #endregion UNITY_FUNC
@@ -94,7 +125,9 @@ public class HexagonField : MonoBehaviour {
 
 
     #region PRIVATE_FUNC
-    //Set BlockState
+    //## Get
+
+    //## Set - BlockState
     private void SetBlocksState(eBLOCK_STATE state)
     {
         for (int i = 0; i < m_Blocks.Length; ++i)
@@ -105,7 +138,60 @@ public class HexagonField : MonoBehaviour {
             }
         }
     }
-    
+
+    //## Check
+    private bool Check_CanTakeToPool(string name)
+    {
+        if(m_BlockNamePool.Count>0)
+        {
+            if(m_BlockNamePool.Contains(name) == false)
+            {
+                m_BlockNamePool.Add(name);
+                return true;
+            }         
+        }
+        else
+        {
+            m_BlockNamePool.Add(name);
+            return true;
+        }
+        return false;
+    }
+
+    private bool Check_SameType(BlockBase bBase)
+    {
+        if(m_BlockBombPool.Count>0)
+        {
+            if(m_BlockBombPool[m_BlockBombPool.Count-1].m_BlockType == bBase.m_BlockType)
+            {
+                return true;
+            }
+        }
+        else
+        {
+            return true;
+        }
+        return false;
+    }
+
+    //## Process
+    private void Proc_BlockSelect()
+    {
+        Ray ray = m_Cam.ScreenPointToRay(Input.mousePosition);
+
+        if (Physics.Raycast(ray, out hit))
+        {
+            if (Check_CanTakeToPool(hit.collider.gameObject.name))
+            {
+                BlockBase bBase = hit.collider.gameObject.GetComponent<BlockBase>();
+                if (Check_SameType(bBase))
+                {
+                    m_BlockBombPool.Add(bBase);
+                    Debug.Log("Touched Block = " + hit.collider.gameObject);
+                }
+            }
+        }
+    }
     #endregion PRIVATE_FUNC
 
 
@@ -124,7 +210,7 @@ public class HexagonField : MonoBehaviour {
             for (int k = 0; k < m_Blocks[i].Length; ++k)
             {
                 int randBlock = Random.Range((int)eBLOCK_TYPE.RED, (int)eBLOCK_TYPE.PURPLE);
-                if(i%2 == 1)
+                if (i % 2 == 1)
                 {
                     oddPosY = BLOCK_GAP_HEIGHT / 2;
                 }
@@ -134,6 +220,7 @@ public class HexagonField : MonoBehaviour {
                 }
                 blockObj = Instantiate(Resources.Load("Prefabs/Blocks_" + randBlock)) as GameObject;
                 blockObj.transform.parent = parentObj;
+                blockObj.name = "Block_" + randBlock + "_" + i + "_" + k;
                 m_Blocks[i][k] = blockObj.AddComponent<BlockBase>();
                 m_Blocks[i][k].SetBlockProperty(i, k, oddPosY);
             }
@@ -144,7 +231,7 @@ public class HexagonField : MonoBehaviour {
     {
         m_GameState = state;
 
-        switch(state)
+        switch (state)
         {
             case eGAME_STATE.DROP:
                 m_DropStartTime = Time.time;
@@ -167,7 +254,7 @@ public class HexagonField : MonoBehaviour {
 
     public void DestroyHexagonField()
     {
-        if(m_Blocks != null)
+        if (m_Blocks != null)
         {
             for (int i = 0; i < m_Blocks.Length; ++i)
             {
@@ -192,6 +279,6 @@ public class HexagonField : MonoBehaviour {
 
     #region PROPERTY
     #endregion PROPERTY
-    
+
 }
 
