@@ -58,7 +58,7 @@ public class HexagonField : MonoBehaviour
     private List<BlockBase> m_BlockBombPool;
     private List<string> m_BlockNamePool;
     private RaycastHit hit;
-    private bool m_bMousePress;
+    private bool m_bTouchPress;
     #endregion MEMBER_VAR
 
     #region UNITY_FUNC
@@ -100,33 +100,18 @@ public class HexagonField : MonoBehaviour
             case eGAME_STATE.PLAY:
                 if(Input.GetMouseButtonDown(0))
                 {
-                    m_bMousePress = true;
+                    m_bTouchPress = true;
                 }
 
                 if(Input.GetMouseButtonUp(0))
                 {
-                    if (m_bMousePress) 
+                    if (m_bTouchPress) 
                     {
-                        if(m_BlockBombPool.Count>2)
-                        {
-                            for (int i = 0; i < m_BlockBombPool.Count; ++i)
-                            {
-                                m_BlockBombPool[i].SetBlockState(eBLOCK_STATE.EXPLOSION);
-                            }
-                        }
-
-                        Debug.Log("Pool Count = " + m_BlockBombPool.Count);
-                        for(int i=0; i< m_BlockBombPool.Count; ++i)
-                        {
-                            m_BlockBombPool[i].m_PickUpObj.SetActive(false);
-                        }
-                        m_BlockBombPool.Clear();
-                        m_BlockNamePool.Clear();
-                        m_bMousePress = false;
+                        SetTouchReleased();
                     }    
                 }
 
-                if(m_bMousePress)
+                if(m_bTouchPress)
                 {
                     Proc_BlockSelect();
                 }
@@ -150,6 +135,26 @@ public class HexagonField : MonoBehaviour
                 m_Blocks[i][k].m_BlockState = state;
             }
         }
+    }
+
+    private void SetTouchReleased()
+    {
+        if (m_BlockBombPool.Count > 2)
+        {
+            for (int i = 0; i < m_BlockBombPool.Count; ++i)
+            {
+                m_BlockBombPool[i].SetBlockState(eBLOCK_STATE.EXPLOSION);
+            }
+        }
+
+        Debug.Log("Pool Count = " + m_BlockBombPool.Count);
+        for (int i = 0; i < m_BlockBombPool.Count; ++i)
+        {
+            m_BlockBombPool[i].m_PickUpObj.SetActive(false);
+        }
+        m_BlockBombPool.Clear();
+        m_BlockNamePool.Clear();
+        m_bTouchPress = false;
     }
 
     //## Check
@@ -197,6 +202,7 @@ public class HexagonField : MonoBehaviour
             if (Check_CanTakeToPool(hit.collider.gameObject.name))
             {
                 BlockBase bBase = hit.collider.gameObject.GetComponent<BlockBase>();
+                //have to check : touched block is near origin block
                 if (Check_SameType(bBase))
                 {
                     bBase.SetBlockState(eBLOCK_STATE.PICKUP);
