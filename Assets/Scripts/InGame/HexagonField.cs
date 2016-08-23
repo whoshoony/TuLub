@@ -107,7 +107,19 @@ public class HexagonField : MonoBehaviour
                 {
                     if (m_bMousePress) 
                     {
+                        if(m_BlockBombPool.Count>2)
+                        {
+                            for (int i = 0; i < m_BlockBombPool.Count; ++i)
+                            {
+                                m_BlockBombPool[i].SetBlockState(eBLOCK_STATE.EXPLOSION);
+                            }
+                        }
+
                         Debug.Log("Pool Count = " + m_BlockBombPool.Count);
+                        for(int i=0; i< m_BlockBombPool.Count; ++i)
+                        {
+                            m_BlockBombPool[i].m_PickUpObj.SetActive(false);
+                        }
                         m_BlockBombPool.Clear();
                         m_BlockNamePool.Clear();
                         m_bMousePress = false;
@@ -187,6 +199,7 @@ public class HexagonField : MonoBehaviour
                 BlockBase bBase = hit.collider.gameObject.GetComponent<BlockBase>();
                 if (Check_SameType(bBase))
                 {
+                    bBase.SetBlockState(eBLOCK_STATE.PICKUP);
                     m_BlockBombPool.Add(bBase);
                     Debug.Log("Touched Block = " + hit.collider.gameObject+"/"+bBase.m_BlockType);
                 }
