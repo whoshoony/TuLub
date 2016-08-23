@@ -3,6 +3,7 @@ using System.Collections;
 
 public class BlockBase : MonoBehaviour {
     #region MEMBER_VAR
+    //## Prop
     private HexagonField m_HField;
     public eBLOCK_TYPE m_BlockType;
     public GameObject m_BlockObj;
@@ -17,7 +18,13 @@ public class BlockBase : MonoBehaviour {
     public int m_HIdx;
     public int m_VIdx;
 
-    //Const
+    //## Block State
+    //# pickup
+    private bool m_bStPu;
+    //private float m_ChangeScale;
+    Vector2 m_PickUpScale;
+
+    //## Const
     private const float BLOCK_GAP_WIDTH = 0.78f;
     private const float BLOCK_GAP_HEIGHT = 0.86f;
 
@@ -27,6 +34,8 @@ public class BlockBase : MonoBehaviour {
     private const float STAY_BASE_YPOSITION = 6; 
 
     private const int DROP_SPEED = 40;
+
+    private const float CHANGE_SCALE_VALUE = 0.2f;
 
     #endregion MEMBER_VAR
 
@@ -60,7 +69,11 @@ public class BlockBase : MonoBehaviour {
 
         m_HIdx = hx;
         m_VIdx = vy;
+
+        m_PickUpScale = new Vector2(1, 1);
         m_bDropStart = false;
+        m_bStPu = false;
+        //m_ChangeScale = 1;
 
         tmpPos.x = BLOCK_STARTPOS_X + (m_HIdx * BLOCK_GAP_WIDTH); 
         tmpPos.y = BLOCK_STARTPOS_Y + (m_VIdx * BLOCK_GAP_HEIGHT) + oddPosY;
@@ -84,6 +97,7 @@ public class BlockBase : MonoBehaviour {
         switch(state)
         {
             case eBLOCK_STATE.PICKUP:
+                m_bStPu = true;
                 m_PickUpObj.SetActive(true);
                 break;
             case eBLOCK_STATE.EXPLOSION:
@@ -106,15 +120,67 @@ public class BlockBase : MonoBehaviour {
             case eBLOCK_STATE.IDLE:
                 break;
             case eBLOCK_STATE.PICKUP:
+                Proc_PickUp();
                 break;
         }
     }
 
+    //##  Process
     private void Proc_Drop()
     {
         if(m_bDropStart)
         {
             Move_Drop();
+        }
+    }
+
+    private bool m_bStRwPuScale = false;
+    private void Proc_PickUp()
+    {
+        int axis = 0;
+        if (m_bStPu)
+        { 
+            axis = Random.Range(0, 1);
+
+            switch(axis)
+            {
+                case 0:
+                    m_PickUpScale.x -= CHANGE_SCALE_VALUE;
+                    break;
+                case 1:
+                    m_PickUpScale.y -= CHANGE_SCALE_VALUE;
+                    break;
+            }
+
+            m_BlockObj.transform.localScale = m_PickUpScale;
+
+            if(m_PickUpScale.x <= (-1+ CHANGE_SCALE_VALUE) || m_PickUpScale.y <= (-1+ CHANGE_SCALE_VALUE))
+            {
+                m_bStRwPuScale = true;
+                m_bStPu = false;
+            }
+        }
+
+        if(m_bStRwPuScale)
+        {
+            switch (axis)
+            {
+                case 0:
+                    m_PickUpScale.x += CHANGE_SCALE_VALUE;
+                    break;
+                case 1:
+                    m_PickUpScale.y += CHANGE_SCALE_VALUE;
+                    break;
+            }
+
+            m_BlockObj.transform.localScale = m_PickUpScale;
+
+            if (m_PickUpScale.x >= 1 || m_PickUpScale.y >= 1)
+            {
+                m_PickUpScale.x = m_PickUpScale.y = 1;
+                m_BlockObj.transform.localScale = m_PickUpScale;
+                m_bStRwPuScale = false;
+            }
         }
     }
 
