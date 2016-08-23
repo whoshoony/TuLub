@@ -6,6 +6,7 @@ public class BlockBase : MonoBehaviour {
     private HexagonField m_HField;
     public eBLOCK_TYPE m_BlockType;
     public GameObject m_BlockObj;
+    public GameObject m_PickUpObj;
     public eBLOCK_STATE m_BlockState;
     public Vector2 m_StayPosition; // related STAY_BASE_POSITION
     public Vector2 m_GoalPosition;
@@ -46,6 +47,7 @@ public class BlockBase : MonoBehaviour {
 
 
     #region PUBLIC_FUNC
+    //## Set
     public void SetBlockProperty(int hx, int vy, float oddPosY, eBLOCK_TYPE type)
     {
         Vector2 tmpPos = new Vector2();
@@ -69,6 +71,26 @@ public class BlockBase : MonoBehaviour {
         m_DropNormalizeY = (m_GoalPosition.y - m_StayPosition.y) / DROP_SPEED;
 
         m_BlockObj.transform.localPosition = m_StayPosition;
+
+        m_PickUpObj = Instantiate(Resources.Load("Prefabs/PickUp")) as GameObject;
+        m_PickUpObj.transform.localPosition = m_GoalPosition;
+        m_PickUpObj.SetActive(false);
+    }
+
+    public void SetBlockState(eBLOCK_STATE state)
+    {
+        m_BlockState = state;
+
+        switch(state)
+        {
+            case eBLOCK_STATE.PICKUP:
+                m_PickUpObj.SetActive(true);
+                break;
+            case eBLOCK_STATE.EXPLOSION:
+                m_BlockObj.SetActive(false);
+                m_PickUpObj.SetActive(false);
+                break;
+        }
     }
     #endregion PUBLIC_FUNC
 
@@ -82,6 +104,8 @@ public class BlockBase : MonoBehaviour {
                 Proc_Drop();
                 break;
             case eBLOCK_STATE.IDLE:
+                break;
+            case eBLOCK_STATE.PICKUP:
                 break;
         }
     }
