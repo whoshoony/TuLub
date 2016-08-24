@@ -196,7 +196,7 @@ public class HexagonField : MonoBehaviour
     }
 
     private bool Check_IsNearBlockHor(int posHor)
-    {
+    {        
         if(m_FirstPickBlockLocInfo.x == posHor || m_FirstPickBlockLocInfo.x-1 == posHor || m_FirstPickBlockLocInfo.x+1 == posHor)
         {
             return true;
@@ -213,12 +213,51 @@ public class HexagonField : MonoBehaviour
         return false;
     }
 
+    private bool Check_IsNearBlock(int hx, int vy)
+    {
+        //(-1, 0)
+        if(m_FirstPickBlockLocInfo.x-1 == hx && m_FirstPickBlockLocInfo.y == vy)
+        {
+            return true;
+        }
+        //(0, -1)
+        else if(m_FirstPickBlockLocInfo.x == hx && m_FirstPickBlockLocInfo.y-1 == vy)
+        {
+            return true;
+        }
+        //(+1, 0)
+        else if(m_FirstPickBlockLocInfo.x+1 == hx && m_FirstPickBlockLocInfo.y == vy)
+        {
+            return true;
+        }
+        //(+1, +1)
+        else if(m_FirstPickBlockLocInfo.x+1 == hx && m_FirstPickBlockLocInfo.y+1 == vy)
+        {
+            return true;
+        }
+        //(0, +1)
+        else if(m_FirstPickBlockLocInfo.x == hx && m_FirstPickBlockLocInfo.y+1 == vy)
+        {
+            return true;
+        }
+        //(-1, +1)
+        else if(m_FirstPickBlockLocInfo.x-1 == hx && m_FirstPickBlockLocInfo.y+1 == vy)
+        {
+            return true;
+        }
+        return false;
+    }
+
     private bool Check_CanMakeLine(BlockBase bBase)
     {
         if(m_BlockBombPool.Count>0)
         {
-            if(Check_IsNearBlockHor(bBase.HIdx) && Check_IsNearBlockVer(bBase.VIdx))
+            Debug.Log("origin = "+m_FirstPickBlockLocInfo+" / "+bBase.HIdx+", "+bBase.VIdx);
+            //if(Check_IsNearBlockHor(bBase.HIdx) && Check_IsNearBlockVer(bBase.VIdx))
+            if(Check_IsNearBlock(bBase.HIdx, bBase.VIdx))
             {
+                m_FirstPickBlockLocInfo.x = bBase.HIdx;
+                m_FirstPickBlockLocInfo.y = bBase.VIdx;
                 return true;
             }
         }
