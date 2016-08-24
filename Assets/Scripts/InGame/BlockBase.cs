@@ -15,8 +15,8 @@ public class BlockBase : MonoBehaviour {
     private float m_DropNormalizeY;
     public bool m_bDropStart;
 
-    public int m_HIdx;
-    public int m_VIdx;
+    private int m_HIdx;
+    private int m_VIdx;
 
     //## Block State
     //# pickup
@@ -69,6 +69,7 @@ public class BlockBase : MonoBehaviour {
 
         m_HIdx = hx;
         m_VIdx = vy;
+        Debug.Log("idx = "+m_HIdx+", "+m_VIdx);
 
         m_PickUpScale = new Vector2(1, 1);
         m_bDropStart = false;
@@ -203,4 +204,16 @@ public class BlockBase : MonoBehaviour {
         }
     }
     #endregion PRIVATE_FUNC
+
+    #region PROPERTY
+    public int HIdx
+    { 
+        get { return m_HIdx; }
+    }
+    public int VIdx
+    {
+        get { return m_VIdx; }
+    }
+
+    #endregion PROPERTY
 }

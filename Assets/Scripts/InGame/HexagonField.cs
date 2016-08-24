@@ -57,8 +57,9 @@ public class HexagonField : MonoBehaviour
     private Camera m_Cam;
     private List<BlockBase> m_BlockBombPool;
     private List<string> m_BlockNamePool;
-    private RaycastHit hit;
+    private RaycastHit m_Hit;
     private bool m_bTouchPress;
+    private Vector2 m_FirstPickBlockLocInfo;
     #endregion MEMBER_VAR
 
     #region UNITY_FUNC
@@ -72,6 +73,7 @@ public class HexagonField : MonoBehaviour
         m_BlockBombPool = new List<BlockBase>();
         m_BlockNamePool = new List<string>();
         m_Cam = Camera.main;
+        m_FirstPickBlockLocInfo = new Vector2();
     }
 
 
@@ -152,6 +154,7 @@ public class HexagonField : MonoBehaviour
         {
             m_BlockBombPool[i].m_PickUpObj.SetActive(false);
         }
+        
         m_BlockBombPool.Clear();
         m_BlockNamePool.Clear();
         m_bTouchPress = false;
@@ -192,22 +195,62 @@ public class HexagonField : MonoBehaviour
         return false;
     }
 
+    private bool Check_IsNearBlockHor(int posHor)
+    {
+        if(m_FirstPickBlockLocInfo.x == posHor || m_FirstPickBlockLocInfo.x-1 == posHor || m_FirstPickBlockLocInfo.x+1 == posHor)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    private bool Check_IsNearBlockVer(int posVer)
+    {
+        if (m_FirstPickBlockLocInfo.y == posVer || m_FirstPickBlockLocInfo.y - 1 == posVer || m_FirstPickBlockLocInfo.y + 1 == posVer)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    private bool Check_CanMakeLine(BlockBase bBase)
+    {
+        if(m_BlockBombPool.Count>0)
+        {
+            if(Check_IsNearBlockHor(bBase.HIdx) && Check_IsNearBlockVer(bBase.VIdx))
+            {
+                return true;
+            }
+        }
+        else
+        {
+            //Adding for the first time
+            m_FirstPickBlockLocInfo.x = bBase.HIdx;
+            m_FirstPickBlockLocInfo.y = bBase.VIdx;
+            return true;
+        }
+        return false;
+    }
+
     //## Process
     private void Proc_BlockSelect()
     {
         Ray ray = m_Cam.ScreenPointToRay(Input.mousePosition);
 
-        if (Physics.Raycast(ray, out hit))
+        if (Physics.Raycast(ray, out m_Hit))
         {
-            if (Check_CanTakeToPool(hit.collider.gameObject.name))
+            if (Check_CanTakeToPool(m_Hit.collider.gameObject.name))
             {
-                BlockBase bBase = hit.collider.gameObject.GetComponent<BlockBase>();
+                BlockBase bBase = m_Hit.collider.gameObject.GetComponent<BlockBase>();
                 //have to check : touched block is near origin block
-                if (Check_SameType(bBase))
+                if(Check_CanMakeLine(bBase))
                 {
-                    bBase.SetBlockState(eBLOCK_STATE.PICKUP);
-                    m_BlockBombPool.Add(bBase);
-                    Debug.Log("Touched Block = " + hit.collider.gameObject+"/"+bBase.m_BlockType);
+                    if (Check_SameType(bBase))
+                    {
+                        bBase.SetBlockState(eBLOCK_STATE.PICKUP);
+                        m_BlockBombPool.Add(bBase);
+                        Debug.Log("Touched Block = " + m_Hit.collider.gameObject + "/" + bBase.m_BlockType);
+                    }
                 }
             }
         }
