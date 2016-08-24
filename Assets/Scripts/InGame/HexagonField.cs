@@ -215,33 +215,59 @@ public class HexagonField : MonoBehaviour
 
     private bool Check_IsNearBlock(int hx, int vy)
     {
-        //(-1, 0)
-        if(m_FirstPickBlockLocInfo.x-1 == hx && m_FirstPickBlockLocInfo.y == vy)
+        if(m_FirstPickBlockLocInfo.x % 2 == 0)
+        {
+            //(-1, 0)
+            if (m_FirstPickBlockLocInfo.x - 1 == hx && m_FirstPickBlockLocInfo.y == vy)
+            {
+                return true;
+            }
+            //(+1, 0)
+            else if (m_FirstPickBlockLocInfo.x + 1 == hx && m_FirstPickBlockLocInfo.y == vy)
+            {
+                return true;
+            }
+            //(-1, -1)
+            else if (m_FirstPickBlockLocInfo.x - 1 == hx && m_FirstPickBlockLocInfo.y - 1 == vy)
+            {
+                return true;
+            }
+            //(+1, -1)
+            else if (m_FirstPickBlockLocInfo.x + 1 == hx && m_FirstPickBlockLocInfo.y - 1 == vy)
+            {
+                return true;
+            }
+        }
+        else
+        {
+            //(-1, +1)
+            if (m_FirstPickBlockLocInfo.x - 1 == hx && m_FirstPickBlockLocInfo.y + 1 == vy)
+            {
+                return true;
+            }
+            //(-1, 0)
+            else if (m_FirstPickBlockLocInfo.x - 1 == hx && m_FirstPickBlockLocInfo.y == vy)
+            {
+                return true;
+            }
+            //(+1, +1)
+            else if (m_FirstPickBlockLocInfo.x + 1 == hx && m_FirstPickBlockLocInfo.y + 1 == vy)
+            {
+                return true;
+            }
+            //(+1, 0)
+            else if (m_FirstPickBlockLocInfo.x + 1 == hx && m_FirstPickBlockLocInfo.y == vy)
+            {
+                return true;
+            }
+        }
+        //(0, +1)
+        if (m_FirstPickBlockLocInfo.x == hx && m_FirstPickBlockLocInfo.y + 1 == vy)
         {
             return true;
         }
         //(0, -1)
-        else if(m_FirstPickBlockLocInfo.x == hx && m_FirstPickBlockLocInfo.y-1 == vy)
-        {
-            return true;
-        }
-        //(+1, 0)
-        else if(m_FirstPickBlockLocInfo.x+1 == hx && m_FirstPickBlockLocInfo.y == vy)
-        {
-            return true;
-        }
-        //(+1, +1)
-        else if(m_FirstPickBlockLocInfo.x+1 == hx && m_FirstPickBlockLocInfo.y+1 == vy)
-        {
-            return true;
-        }
-        //(0, +1)
-        else if(m_FirstPickBlockLocInfo.x == hx && m_FirstPickBlockLocInfo.y+1 == vy)
-        {
-            return true;
-        }
-        //(-1, +1)
-        else if(m_FirstPickBlockLocInfo.x-1 == hx && m_FirstPickBlockLocInfo.y+1 == vy)
+        else if (m_FirstPickBlockLocInfo.x == hx && m_FirstPickBlockLocInfo.y - 1 == vy)
         {
             return true;
         }
@@ -253,11 +279,9 @@ public class HexagonField : MonoBehaviour
         if(m_BlockBombPool.Count>0)
         {
             Debug.Log("origin = "+m_FirstPickBlockLocInfo+" / "+bBase.HIdx+", "+bBase.VIdx);
-            //if(Check_IsNearBlockHor(bBase.HIdx) && Check_IsNearBlockVer(bBase.VIdx))
+
             if(Check_IsNearBlock(bBase.HIdx, bBase.VIdx))
             {
-                m_FirstPickBlockLocInfo.x = bBase.HIdx;
-                m_FirstPickBlockLocInfo.y = bBase.VIdx;
                 return true;
             }
         }
@@ -287,6 +311,8 @@ public class HexagonField : MonoBehaviour
                     if (Check_SameType(bBase))
                     {
                         bBase.SetBlockState(eBLOCK_STATE.PICKUP);
+                        m_FirstPickBlockLocInfo.x = bBase.HIdx;
+                        m_FirstPickBlockLocInfo.y = bBase.VIdx;
                         m_BlockBombPool.Add(bBase);
                         Debug.Log("Touched Block = " + m_Hit.collider.gameObject + "/" + bBase.m_BlockType);
                     }
