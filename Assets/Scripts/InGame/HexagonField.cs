@@ -15,7 +15,8 @@ public enum eBLOCK_TYPE : byte
     //special
     ORANGE,
     BLUE,
-    PINK
+    PINK, 
+    NONE
 }
 
 public enum eBLOCK_STATE
@@ -36,6 +37,12 @@ public enum eGAME_STATE //ingamemanager에 있는 State를 사용한다. 아니�
     PLAY,
     FINISH
 }
+
+public enum eFIELDMAP_STATE
+{
+    EMPTY,
+    POOL
+}
 #endregion ENUM
 
 public class HexagonField : MonoBehaviour
@@ -43,6 +50,7 @@ public class HexagonField : MonoBehaviour
     #region MEMBER_VAR
     public eGAME_STATE m_GameState;
     public BlockBase[][] m_Blocks;
+    public HexagonFieldMap[][] m_HexaFieldMap;
 
     private float m_DropStartTime;
     public int m_dropStep;
@@ -146,6 +154,8 @@ public class HexagonField : MonoBehaviour
             for (int i = 0; i < m_BlockBombPool.Count; ++i)
             {
                 m_BlockBombPool[i].SetBlockState(eBLOCK_STATE.EXPLOSION);
+
+                SetHexaFieldMapState(m_BlockBombPool[i].HIdx, m_BlockBombPool[i].VIdx, eFIELDMAP_STATE.EMPTY);
             }
         }
 
@@ -154,6 +164,8 @@ public class HexagonField : MonoBehaviour
         {
             m_BlockBombPool[i].m_PickUpObj.SetActive(false);
         }
+
+
         
         m_BlockBombPool.Clear();
         m_BlockNamePool.Clear();
@@ -330,14 +342,16 @@ public class HexagonField : MonoBehaviour
         float oddPosY = 0; //zigzag
 
         m_Blocks = new BlockBase[FIELD_WIDTH][];
+        m_HexaFieldMap = new HexagonFieldMap[FIELD_WIDTH][];
 
         for (int i = 0; i < m_Blocks.Length; ++i)
         {
             m_Blocks[i] = new BlockBase[FIELD_HEIGHT];
+            m_HexaFieldMap[i] = new HexagonFieldMap[FIELD_HEIGHT];
 
             for (int k = 0; k < m_Blocks[i].Length; ++k)
             {
-                int randBlock = Random.Range((int)eBLOCK_TYPE.RED, (int)eBLOCK_TYPE.PURPLE);
+                eBLOCK_TYPE randBlock = (eBLOCK_TYPE)Random.Range((int)eBLOCK_TYPE.RED, (int)eBLOCK_TYPE.PURPLE);
                 if (i % 2 == 1)
                 {
                     oddPosY = BLOCK_GAP_HEIGHT / 2;
@@ -350,7 +364,11 @@ public class HexagonField : MonoBehaviour
                 blockObj.transform.parent = parentObj;
                 blockObj.name = "Block_" + randBlock + "_" + i + "_" + k;
                 m_Blocks[i][k] = blockObj.AddComponent<BlockBase>();
-                m_Blocks[i][k].SetBlockProperty(i, k, oddPosY, (eBLOCK_TYPE)randBlock);
+                m_Blocks[i][k].SetBlockProperty(i, k, oddPosY, randBlock);
+
+                //Set Hexagon Field Map
+                m_HexaFieldMap[i][k] = new HexagonFieldMap();
+                m_HexaFieldMap[i][k].InitHexaFieldMap(eFIELDMAP_STATE.POOL, randBlock, i, k);
             }
         }
     }
@@ -377,6 +395,16 @@ public class HexagonField : MonoBehaviour
     public void SetBeginState()
     {
         SetMainGameState(eGAME_STATE.DROP);
+    }
+
+    private void SetHexaFieldMapState(int hx, int vy, eFIELDMAP_STATE state)
+    {
+        m_HexaFieldMap[hx][vy].m_FMapState = state;
+
+        if(state == eFIELDMAP_STATE.EMPTY)
+        {
+            m_HexaFieldMap[hx][vy].m_FMapType = eBLOCK_TYPE.NONE;            
+        }
     }
 
 

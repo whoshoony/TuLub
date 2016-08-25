@@ -65,6 +65,7 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\InGame\BlockBase.cs" />
     <Compile Include="Assets\Scripts\InGame\HexagonField.cs" />
+    <Compile Include="Assets\Scripts\InGame\HexagonFieldMap.cs" />
     <Compile Include="Assets\Scripts\Manager\InGameManager.cs" />
     <Compile Include="Assets\Scripts\Manager\LoadingManager.cs" />
     <Compile Include="Assets\Scripts\Manager\LogoManager.cs" />
