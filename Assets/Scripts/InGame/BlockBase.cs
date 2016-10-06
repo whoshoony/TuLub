@@ -13,7 +13,9 @@ public class BlockBase : MonoBehaviour {
     public Vector2 m_GoalPosition;
     public Vector2 m_DropPosition;
     private float m_DropNormalizeY;
+    public bool m_bDropTarget;
     public bool m_bDropStart;
+    public bool m_bImLastDrop;
 
     private int m_HIdx;
     private int m_VIdx;
@@ -36,6 +38,8 @@ public class BlockBase : MonoBehaviour {
     private const int DROP_SPEED = 40;
 
     private const float CHANGE_SCALE_VALUE = 0.2f;
+
+    private const int LAST_BLOCK_VINDEX = 11;//5;
 
     #endregion MEMBER_VAR
 
@@ -69,12 +73,18 @@ public class BlockBase : MonoBehaviour {
 
         m_HIdx = hx;
         m_VIdx = vy;
-        Debug.Log("idx = "+m_HIdx+", "+m_VIdx);
+        //Debug.Log("idx = "+m_HIdx+", "+m_VIdx);
 
         m_PickUpScale = new Vector2(1, 1);
-        m_bDropStart = false;
+        m_bDropTarget = m_bDropStart = m_bImLastDrop = false;
         m_bStPu = false;
         //m_ChangeScale = 1;
+
+        if(m_VIdx == LAST_BLOCK_VINDEX)
+        {
+            m_bImLastDrop = true;
+            //Debug.Break();
+        }
 
         tmpPos.x = BLOCK_STARTPOS_X + (m_HIdx * BLOCK_GAP_WIDTH); 
         tmpPos.y = BLOCK_STARTPOS_Y + (m_VIdx * BLOCK_GAP_HEIGHT) + oddPosY;
@@ -89,6 +99,18 @@ public class BlockBase : MonoBehaviour {
         m_PickUpObj = Instantiate(Resources.Load("Prefabs/PickUp")) as GameObject;
         m_PickUpObj.transform.localPosition = m_GoalPosition;
         m_PickUpObj.SetActive(false);
+        Debug.Log("idx = " + m_HIdx + ", " + m_VIdx+"/"+ m_PickUpObj.transform.localPosition);
+    }
+
+    public void SerSwitchBlockProp(int hx, int vy, Vector2 goalPos)//, eBLOCK_STATE state)
+    {
+        m_HIdx = hx;
+        m_VIdx = vy;
+        m_GoalPosition = goalPos;
+        m_bDropTarget = true;
+        m_bDropStart = false;
+
+        //SetBlockState(state);
     }
 
     public void SetBlockState(eBLOCK_STATE state)
@@ -132,6 +154,10 @@ public class BlockBase : MonoBehaviour {
         if(m_bDropStart)
         {
             Move_Drop();
+        }
+        else
+        {
+            Debug.Log("I'm not start drop ; "+m_VIdx);
         }
     }
 
@@ -194,11 +220,13 @@ public class BlockBase : MonoBehaviour {
         if(m_BlockObj.transform.localPosition.y <= m_GoalPosition.y)
         {
             m_BlockObj.transform.localPosition = m_GoalPosition;
-            //Debug.Log("vIdx = "+m_VIdx);
-            if(m_VIdx == m_HField.m_Blocks[0].Length-1)
+            m_StayPosition = m_GoalPosition;
+            Debug.Log("vIdx = "+m_VIdx+"/"+( m_HField.m_Blocks[0].Length - 1));
+            if (m_bImLastDrop)
             {
-                //m_HField.SetMainGameState(eGAME_STATE.READY);
-                m_HField.SetMainGameState(eGAME_STATE.PLAY);
+                m_bDropStart = false;
+                m_HField.m_dropStep = 0;
+                m_HField.SetMainGameState(eGAME_STATE.PLAY);                
             }
             m_BlockState = eBLOCK_STATE.IDLE;
         }

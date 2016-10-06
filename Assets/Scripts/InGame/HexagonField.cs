@@ -15,13 +15,14 @@ public enum eBLOCK_TYPE : byte
     //special
     ORANGE,
     BLUE,
-    PINK
+    PINK, 
+    NONE
 }
 
 public enum eBLOCK_STATE
 {
     READY,
-    IDLE,
+    IDLE,    
     DROP,
     PICKUP,
     WAIT,
@@ -31,25 +32,44 @@ public enum eBLOCK_STATE
 
 public enum eGAME_STATE //ingamemanager에 있는 State를 사용한다. 아니다 이미 플레이 상태에서 게임의 스테이트를 말한다.
 {
+    DROP_ALL,
     DROP,
     READY,
     PLAY,
     FINISH
 }
+
+public enum eFIELDMAP_STATE
+{
+    EMPTY,
+    FULL
+}
 #endregion ENUM
 
 public class HexagonField : MonoBehaviour
 {
+    #region STRUC
+    public struct SwitchBlock
+    {
+        public int emptyCntInLine;
+        public int startPosition;
+        public bool bDrop;
+    }
+    #endregion STRUC
+
+
     #region MEMBER_VAR
     public eGAME_STATE m_GameState;
     public BlockBase[][] m_Blocks;
+    public HexagonFieldMap[][] m_HexaFieldMap;
+    public SwitchBlock[] m_SwitchBlock;
 
     private float m_DropStartTime;
     public int m_dropStep;
 
     //const
     private const int FIELD_WIDTH = 7;
-    public const int FIELD_HEIGHT = 6;
+    public const int FIELD_HEIGHT = 6*2;
 
     private const float BLOCK_GAP_HEIGHT = 0.86f;
 
@@ -83,11 +103,12 @@ public class HexagonField : MonoBehaviour
     {
         switch (m_GameState)
         {
-            case eGAME_STATE.DROP:
+            case eGAME_STATE.DROP_ALL:
                 if ((Time.time - m_DropStartTime) > 0.05f)
                 {
                     if (m_dropStep < FIELD_HEIGHT)
                     {
+                        //Hor Line drop start
                         for (int i = 0; i < m_Blocks.Length; ++i)
                         {
                             m_Blocks[i][m_dropStep].m_bDropStart = true;
@@ -97,6 +118,26 @@ public class HexagonField : MonoBehaviour
                     }
 
                     m_DropStartTime = Time.time;
+                }
+                break;
+            case eGAME_STATE.DROP:
+                if ((Time.time - m_DropStartTime) > 0.05f)
+                {
+                    if (m_dropStep < FIELD_HEIGHT)
+                    {
+                        //Hor Line drop start
+                        for (int i = 0; i < m_Blocks.Length; ++i)
+                        {
+                            if (m_SwitchBlock[i].bDrop)
+                            {
+                                if(m_Blocks[i][m_dropStep].m_bDropTarget)
+                                {
+                                    m_Blocks[i][m_dropStep].m_bDropStart = true;
+                                }
+                            }
+                        }
+                        m_dropStep++;
+                    }
                 }
                 break;
             case eGAME_STATE.PLAY:
@@ -134,7 +175,23 @@ public class HexagonField : MonoBehaviour
         {
             for (int k = 0; k < m_Blocks[i].Length; ++k)
             {
-                m_Blocks[i][k].m_BlockState = state;
+                //m_Blocks[i][k].m_BlockState = state;
+                m_Blocks[i][k].SetBlockState(state);
+            }
+        }
+    }
+
+    private void SetBlockStateWhenSwich(eBLOCK_STATE state)
+    {
+        for (int i = 0; i < m_Blocks.Length; ++i)
+        {
+            for (int k = 0; k < m_Blocks[i].Length; ++k)
+            {
+                if (m_Blocks[i][k].m_bDropTarget)
+                {
+                    Debug.Log(i + "," + k + " is drop target");
+                    m_Blocks[i][k].SetBlockState(state);
+                }
             }
         }
     }
@@ -146,6 +203,8 @@ public class HexagonField : MonoBehaviour
             for (int i = 0; i < m_BlockBombPool.Count; ++i)
             {
                 m_BlockBombPool[i].SetBlockState(eBLOCK_STATE.EXPLOSION);
+
+                SetHexaFieldMapState(m_BlockBombPool[i].HIdx, m_BlockBombPool[i].VIdx, eFIELDMAP_STATE.EMPTY);
             }
         }
 
@@ -154,10 +213,45 @@ public class HexagonField : MonoBehaviour
         {
             m_BlockBombPool[i].m_PickUpObj.SetActive(false);
         }
-        
+
+        //each line Search
+        SearchEachLineInMap();
+        SetSwitchBlocks();
+
+
         m_BlockBombPool.Clear();
         m_BlockNamePool.Clear();
         m_bTouchPress = false;
+    }
+
+    private void SetSwitchBlocks()
+    {
+        for(int i=0; i<m_HexaFieldMap.Length; ++i)
+        {
+            if(m_SwitchBlock[i].bDrop)
+            {
+                for (int k = 0; k < m_HexaFieldMap[i].Length; ++k)
+                {
+                    if (k >= m_SwitchBlock[i].startPosition)
+                    {
+                        int switchPos = k - m_SwitchBlock[i].emptyCntInLine;
+                        m_HexaFieldMap[i][k].m_FMapState = eFIELDMAP_STATE.FULL;
+                        m_HexaFieldMap[i][k].m_FMapBlockType = m_Blocks[i][k].m_BlockType;
+                        try
+                        {
+                            m_Blocks[i][k].SerSwitchBlockProp(i, switchPos, m_Blocks[i][switchPos].m_StayPosition);
+                        }
+                        catch(System.Exception e)
+                        {
+                            Debug.Log(e);
+                        }
+                    }
+                }
+            }
+        }
+
+        SetMainGameState(eGAME_STATE.DROP);
+        //SetBlockStateWhenSwich(eBLOCK_STATE.DROP);
     }
 
     //## Check
@@ -295,6 +389,24 @@ public class HexagonField : MonoBehaviour
         return false;
     }
 
+    // ## Search
+    private void SearchEachLineInMap()
+    {
+        for(int i=0; i< m_HexaFieldMap.Length; ++i)
+        {
+            for(int k=0; k< m_HexaFieldMap[i].Length; ++k)
+            {
+                if(m_HexaFieldMap[i][k].m_FMapState == eFIELDMAP_STATE.EMPTY)
+                {
+                    m_SwitchBlock[i].bDrop = true;
+                    m_SwitchBlock[i].startPosition = k + 1;
+                    m_SwitchBlock[i].emptyCntInLine++;
+                    Debug.Log("Empty Block pos = " + i + "," + k+"/"+ m_SwitchBlock[i].startPosition+"/"+ m_SwitchBlock[i].emptyCntInLine);
+                }
+            }
+        }
+    }
+
     //## Process
     private void Proc_BlockSelect()
     {
@@ -330,10 +442,15 @@ public class HexagonField : MonoBehaviour
         float oddPosY = 0; //zigzag
 
         m_Blocks = new BlockBase[FIELD_WIDTH][];
+        m_HexaFieldMap = new HexagonFieldMap[FIELD_WIDTH][];
+        m_SwitchBlock = new SwitchBlock[FIELD_WIDTH];
 
         for (int i = 0; i < m_Blocks.Length; ++i)
         {
             m_Blocks[i] = new BlockBase[FIELD_HEIGHT];
+            m_HexaFieldMap[i] = new HexagonFieldMap[FIELD_HEIGHT];
+            m_SwitchBlock[i].emptyCntInLine = 0;
+            m_SwitchBlock[i].startPosition = -1;
 
             for (int k = 0; k < m_Blocks[i].Length; ++k)
             {
@@ -351,6 +468,13 @@ public class HexagonField : MonoBehaviour
                 blockObj.name = "Block_" + randBlock + "_" + i + "_" + k;
                 m_Blocks[i][k] = blockObj.AddComponent<BlockBase>();
                 m_Blocks[i][k].SetBlockProperty(i, k, oddPosY, (eBLOCK_TYPE)randBlock);
+
+                //Set Hexagon Field Map
+                if (k < FIELD_HEIGHT)
+                {
+                    m_HexaFieldMap[i][k] = new HexagonFieldMap();
+                    m_HexaFieldMap[i][k].InitHexaFieldMap(eFIELDMAP_STATE.FULL, (eBLOCK_TYPE)randBlock, i, k);
+                }
             }
         }
     }
@@ -361,9 +485,13 @@ public class HexagonField : MonoBehaviour
 
         switch (state)
         {
-            case eGAME_STATE.DROP:
+            case eGAME_STATE.DROP_ALL:
                 m_DropStartTime = Time.time;
                 SetBlocksState(eBLOCK_STATE.DROP);
+                break;
+            case eGAME_STATE.DROP:
+                m_DropStartTime = Time.time;
+                SetBlockStateWhenSwich(eBLOCK_STATE.DROP);
                 break;
             case eGAME_STATE.READY:
                 //
@@ -376,7 +504,18 @@ public class HexagonField : MonoBehaviour
 
     public void SetBeginState()
     {
-        SetMainGameState(eGAME_STATE.DROP);
+        SetMainGameState(eGAME_STATE.DROP_ALL);
+    }
+
+    private void SetHexaFieldMapState(int hx, int vy, eFIELDMAP_STATE state)
+    {
+        m_HexaFieldMap[hx][vy].m_FMapState = state;
+
+        if(state == eFIELDMAP_STATE.EMPTY)
+        {
+            //set Block Type in (of Cell) Map 
+            m_HexaFieldMap[hx][vy].m_FMapBlockType = eBLOCK_TYPE.NONE;            
+        }
     }
 
 
