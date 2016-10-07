@@ -99,7 +99,7 @@ public class BlockBase : MonoBehaviour {
         m_PickUpObj = Instantiate(Resources.Load("Prefabs/PickUp")) as GameObject;
         m_PickUpObj.transform.localPosition = m_GoalPosition;
         m_PickUpObj.SetActive(false);
-        Debug.Log("idx = " + m_HIdx + ", " + m_VIdx+"/"+ m_PickUpObj.transform.localPosition);
+        //Debug.Log("idx = " + m_HIdx + ", " + m_VIdx+"/"+ m_PickUpObj.transform.localPosition);
     }
 
     public void SerSwitchBlockProp(int hx, int vy, Vector2 goalPos)//, eBLOCK_STATE state)
@@ -109,7 +109,7 @@ public class BlockBase : MonoBehaviour {
         m_GoalPosition = goalPos;
         m_bDropTarget = true;
         m_bDropStart = false;
-
+        
         //SetBlockState(state);
     }
 
@@ -155,10 +155,10 @@ public class BlockBase : MonoBehaviour {
         {
             Move_Drop();
         }
-        else
-        {
-            Debug.Log("I'm not start drop ; "+m_VIdx);
-        }
+        //else
+        //{
+        //    Debug.Log("I'm not start drop ; "+m_VIdx);
+        //}
     }
 
     private bool m_bStRwPuScale = false;
@@ -221,12 +221,13 @@ public class BlockBase : MonoBehaviour {
         {
             m_BlockObj.transform.localPosition = m_GoalPosition;
             m_StayPosition = m_GoalPosition;
-            Debug.Log("vIdx = "+m_VIdx+"/"+( m_HField.m_Blocks[0].Length - 1));
+            //Debug.Log("vIdx = "+m_VIdx+"/"+( m_HField.m_Blocks[0].Length - 1));
             if (m_bImLastDrop)
             {
                 m_bDropStart = false;
                 m_HField.m_dropStep = 0;
-                m_HField.SetMainGameState(eGAME_STATE.PLAY);                
+                m_HField.SetMainGameState(eGAME_STATE.PLAY);
+                
             }
             m_BlockState = eBLOCK_STATE.IDLE;
         }

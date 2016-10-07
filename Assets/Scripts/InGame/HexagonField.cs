@@ -189,7 +189,7 @@ public class HexagonField : MonoBehaviour
             {
                 if (m_Blocks[i][k].m_bDropTarget)
                 {
-                    Debug.Log(i + "," + k + " is drop target");
+                    //Debug.Log(i + "," + k + " is drop target");
                     m_Blocks[i][k].SetBlockState(state);
                 }
             }
@@ -218,6 +218,8 @@ public class HexagonField : MonoBehaviour
         SearchEachLineInMap();
         SetSwitchBlocks();
 
+
+       
 
         m_BlockBombPool.Clear();
         m_BlockNamePool.Clear();
@@ -252,6 +254,30 @@ public class HexagonField : MonoBehaviour
 
         SetMainGameState(eGAME_STATE.DROP);
         //SetBlockStateWhenSwich(eBLOCK_STATE.DROP);
+    }
+
+    private void InitSwitchBlockValue()
+    {
+        for (int i = 0; i < m_HexaFieldMap.Length; ++i)
+        {
+            if (m_SwitchBlock[i].bDrop)
+            {
+                m_SwitchBlock[i].bDrop = false;
+
+                for (int k = 0; k < m_HexaFieldMap[i].Length; ++k)
+                {
+                    if (m_SwitchBlock[i].startPosition != -1)
+                    {
+                        m_SwitchBlock[i].startPosition = -1;
+                    }
+
+                    if (m_SwitchBlock[i].emptyCntInLine != 0)
+                    {
+                        m_SwitchBlock[i].emptyCntInLine = 0;
+                    }
+                }
+            }
+        }
     }
 
     //## Check
@@ -498,6 +524,7 @@ public class HexagonField : MonoBehaviour
 
                 break;
             case eGAME_STATE.PLAY:
+                InitSwitchBlockValue();
                 break;
         }
     }
